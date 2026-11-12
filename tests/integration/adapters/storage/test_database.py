@@ -86,3 +86,34 @@ def test_newer_unknown_schema_is_rejected_without_changing_data(tmp_path: Path) 
         assert connection.execute("SELECT value FROM preserved").fetchall() == [
             ("keep",)
         ]
+
+
+def test_version_one_database_is_migrated_without_losing_posts(tmp_path: Path) -> None:
+    from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
+
+    database = tmp_path / "knowledge.sqlite3"
+    migration = (
+        Path(__file__).resolve().parents[4]
+        / "src"
+        / "telegram_knowledge_base"
+        / "adapters"
+        / "storage"
+        / "migrations"
+        / "0001_initial.sql"
+    )
+    with sqlite3.connect(database) as connection:
+        connection.executescript(migration.read_text(encoding="utf-8"))
+        connection.execute("PRAGMA user_version = 1")
+        connection.execute("INSERT INTO sources (id, telegram_id) VALUES (1, '123')")
+        connection.execute(
+            "INSERT INTO posts (source_id, message_id, text, published_at) "
+            "VALUES (1, 10, 'preserved', '2026-01-01T00:00:00Z')"
+        )
+
+    initialize_database(database)
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] >= 2
+        assert connection.execute("SELECT text FROM posts").fetchall() == [
+            ("preserved",)
+        ]

@@ -2,8 +2,11 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-SCHEMA_VERSION = 1
-_MIGRATION_FILE = Path(__file__).with_name("migrations") / "0001_initial.sql"
+SCHEMA_VERSION = 2
+_MIGRATIONS = {
+    1: Path(__file__).with_name("migrations") / "0001_initial.sql",
+    2: Path(__file__).with_name("migrations") / "0002_sync.sql",
+}
 
 
 def initialize_database(database: Path) -> None:
@@ -23,10 +26,17 @@ def initialize_database(database: Path) -> None:
         if version == SCHEMA_VERSION:
             return
 
-        migration = _MIGRATION_FILE.read_text(encoding="utf-8")
+        migrations = [
+            path.read_text(encoding="utf-8")
+            for number, path in _MIGRATIONS.items()
+            if number > version
+        ]
+        if not migrations:
+            raise sqlite3.DatabaseError("No migration is available for this schema.")
+        script = "\n".join(migrations)
         connection.executescript(
             "BEGIN IMMEDIATE;\n"
-            f"{migration}\n"
+            f"{script}\n"
             f"PRAGMA user_version = {SCHEMA_VERSION};\n"
             "COMMIT;"
         )

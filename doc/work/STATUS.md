@@ -3,9 +3,9 @@
 | Field | Value |
 | --- | --- |
 | phase | Phase 1 - MVP |
-| current_item | — |
-| stage | idle |
-| active_memo | — |
+| current_item | MVP-02 |
+| stage | blocked |
+| active_memo | doc/work/active/MVP-02-memo.md |
 | last_audit | never |
 | updated | 2026-11-12 |
 | contour_size | Full |

@@ -9,7 +9,9 @@ description = "Локальная персональная база знаний
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "keyring>=25,<26",
     "platformdirs>=4.3,<5",
+    "Telethon>=1.45,<2",
 ]
 
 [project.optional-dependencies]

@@ -114,3 +114,31 @@ def test_configuration_errors_do_not_disclose_environment_secrets(
     assert secret not in caplog.text
     assert secret not in output.out
     assert secret not in output.err
+
+
+def test_network_data_directory_is_rejected_before_path_resolution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from telegram_knowledge_base.config.settings import load_settings
+
+    def reject_resolution(*args: object, **kwargs: object) -> Path:
+        raise AssertionError("Network path must be rejected before filesystem access")
+
+    monkeypatch.setenv("TKB_DATA_DIR", r"\\example.invalid\share\kb")
+    monkeypatch.setattr(Path, "resolve", reject_resolution)
+
+    with pytest.raises(ValueError):
+        load_settings()
+
+
+def test_cloud_synced_data_directory_is_rejected(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from telegram_knowledge_base.config.settings import load_settings
+
+    sync_root = tmp_path / "OneDrive"
+    monkeypatch.setenv("OneDrive", str(sync_root))
+    monkeypatch.setenv("TKB_DATA_DIR", str(sync_root / "data"))
+
+    with pytest.raises(ValueError):
+        load_settings()
