@@ -13,9 +13,12 @@ def test_reinitializing_a_database_preserves_existing_posts(tmp_path: Path) -> N
     with sqlite3.connect(database) as connection:
         version = connection.execute("PRAGMA user_version").fetchone()[0]
         assert version > 0
-        connection.execute("INSERT INTO sources (id, telegram_id) VALUES (?, ?)", (1, 123))
         connection.execute(
-            "INSERT INTO posts (source_id, message_id, text, published_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO sources (id, telegram_id) VALUES (?, ?)", (1, 123)
+        )
+        connection.execute(
+            "INSERT INTO posts (source_id, message_id, text, published_at) "
+            "VALUES (?, ?, ?, ?)",
             (1, 10, "example", "2026-01-01T00:00:00Z"),
         )
 
@@ -80,4 +83,6 @@ def test_newer_unknown_schema_is_rejected_without_changing_data(tmp_path: Path) 
 
     with sqlite3.connect(database) as connection:
         assert connection.execute("PRAGMA user_version").fetchone()[0] == 1000000
-        assert connection.execute("SELECT value FROM preserved").fetchall() == [("keep",)]
+        assert connection.execute("SELECT value FROM preserved").fetchall() == [
+            ("keep",)
+        ]

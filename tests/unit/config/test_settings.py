@@ -29,7 +29,10 @@ def test_defaults_use_local_user_data_and_approved_limits(
 
 @pytest.mark.parametrize(("collection_limit", "page_size"), [(1, 1), (500, 100)])
 def test_local_data_override_and_boundary_limits_are_accepted(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, collection_limit: int, page_size: int
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    collection_limit: int,
+    page_size: int,
 ) -> None:
     from telegram_knowledge_base.config.settings import load_settings
 

@@ -33,6 +33,11 @@ authentication, network-binding and logging boundaries.
 
 ## Checks
 
-The toolchain does not exist yet. MVP-01 creates the Python project metadata,
-test runner, type checker, linter and formatter, then records their exact
-commands here before implementation begins.
+Python 3.12+ is managed by `pyproject.toml`. Install the project and its
+development tools with `python -m pip install -e ".[dev]"`. Run these checks
+from the repository root:
+
+- Tests: `python -m pytest`
+- Types: `python -m mypy src`
+- Lint: `python -m ruff check .`
+- Format check: `python -m ruff format --check .`

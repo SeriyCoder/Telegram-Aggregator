@@ -3,9 +3,9 @@
 | Field | Value |
 | --- | --- |
 | item | MVP-01 |
-| memo | `doc/work/active/MVP-01-memo.md` |
+| memo | `doc/work/archive/phase-1/MVP-01-memo.md` |
 | created | 2026-11-11 |
-| state | red |
+| state | green |
 
 ## Test Files
 
@@ -18,7 +18,7 @@
 
 Контракт тестов: `load_settings` возвращает пути и лимиты; настройки задаются переменными `TKB_DATA_DIR`, `TKB_COLLECTION_LIMIT` и `TKB_PAGE_SIZE`. `initialize_database` применяет версии SQLite-схемы через `user_version`. Начальная схема предоставляет `sources` с полями `id`, `telegram_id` и `posts` с полями `source_id`, `message_id`, `text`, `published_at`. Локальная точка входа `main` возвращает код завершения и не запускает сетевые службы.
 
-Для импортов добавлены минимальные заглушки `src/telegram_knowledge_base/config/settings.py`, `src/telegram_knowledge_base/adapters/storage/sqlite.py` и `src/telegram_knowledge_base/__main__.py`: они не реализуют поведение и явно вызывают `NotImplementedError`.
+На этапе RED в `src/telegram_knowledge_base/config/settings.py`, `src/telegram_knowledge_base/adapters/storage/sqlite.py` и `src/telegram_knowledge_base/__main__.py` были добавлены заглушки, чтобы тесты падали на отсутствующем поведении, а не на ошибках импорта. На этапе реализации заглушки заменены рабочими модулями.
 
 ## Happy Path
 
@@ -63,3 +63,9 @@
 | 2026-11-11 | Набор pytest до добавления заглушек | 16 ошибок импорта | Пакет приложения ещё отсутствовал |
 | 2026-11-11 | Набор pytest с заглушками, первый запуск | 16 упали, 1 прошёл ошибочно | Ложное прохождение исправлено и записано в Deviations memo |
 | 2026-11-11 | `$env:PYTHONPATH = Join-Path (Get-Location) 'src'; $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'; $venvPython = Join-Path (Get-Location) '.venv\Scripts\python.exe'; & $venvPython -m pytest -q --tb=line tests` | RED: 18 упали | Все падения вызваны `NotImplementedError` заглушек; синтаксис Python проверен Pylance |
+| 2026-11-12 | `.\.venv\Scripts\python.exe -m pytest -q` | GREEN: 18 passed | Весь набор офлайн-тестов |
+| 2026-11-12 | `.\.venv\Scripts\python.exe -m mypy src` | GREEN | Проверка типов |
+| 2026-11-12 | `.\.venv\Scripts\python.exe -m ruff check .` | GREEN | Линтинг |
+| 2026-11-12 | `.\.venv\Scripts\python.exe -m ruff format --check .` | GREEN | Проверка форматирования |
+| 2026-11-12 | Два запуска `python -m telegram_knowledge_base` с `PYTHONIOENCODING=cp1252`; затем запрос `PRAGMA user_version` и списка таблиц | GREEN: оба запуска вернули 0; версия 1; таблицы `posts`, `sources` | Проверена повторная инициализация из CLI в Windows-совместимой кодировке |
+| 2026-11-12 | `python -m pip wheel --no-deps --wheel-dir <temp> .` и проверка архива | GREEN | Собран wheel; начальная SQL-миграция присутствует в пакете |

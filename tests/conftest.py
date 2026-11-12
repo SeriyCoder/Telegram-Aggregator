@@ -21,7 +21,15 @@ def prevent_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         attempts.append("network operation")
         raise AssertionError("Network operations are forbidden in tests")
 
-    for name in ("connect", "connect_ex", "bind", "listen", "send", "sendall", "sendto"):
+    for name in (
+        "connect",
+        "connect_ex",
+        "bind",
+        "listen",
+        "send",
+        "sendall",
+        "sendto",
+    ):
         monkeypatch.setattr(socket.socket, name, reject_network)
     for name in ("getaddrinfo", "gethostbyname", "gethostbyname_ex", "gethostbyaddr"):
         monkeypatch.setattr(socket, name, reject_network)
