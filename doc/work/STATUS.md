@@ -4,7 +4,7 @@
 | --- | --- |
 | phase | Phase 1 - MVP |
 | current_item | MVP-02 |
-| stage | blocked |
+| stage | memo |
 | active_memo | doc/work/active/MVP-02-memo.md |
 | last_audit | never |
 | updated | 2026-11-12 |
