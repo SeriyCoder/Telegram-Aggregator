@@ -8,6 +8,9 @@ Specification: [doc/spec/telegram-knowledge-base.md](spec/telegram-knowledge-bas
 
 - [ ] CONTOUR-01 Verify at the next `/5-audit` the contour installed directly on
   2026-11-11
+- [ ] CONTOUR-02 Проверить на следующем `/5-audit` уточнение применимости
+  обязательных тестов конфиденциальности и rate limit для отсутствующих границ
+  (изменено напрямую 2026-11-11)
 
 ## MVP — Локальная база знаний
 

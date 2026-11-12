@@ -22,15 +22,21 @@ Any change to `src/telegram_knowledge_base/config/`,
 `src/telegram_knowledge_base/adapters/telegram/`,
 `src/telegram_knowledge_base/adapters/storage/`,
 `src/telegram_knowledge_base/web/`, authentication, logging or deployment
-configuration must include checks that:
+configuration must include the checks below wherever the corresponding
+behavior exists. Record in the test plan why a check is inapplicable; do not
+create a test-only implementation to make an absent boundary appear testable.
 
-1. Unauthorized requests cannot read pages, search results or stored content.
+1. If private content can be served, unauthorized requests cannot read pages,
+   search results or stored content. If no web server exists, test that the
+   local entry point does not start one.
 2. Credentials and session material do not appear in responses, exceptions or
-   captured logs.
-3. Session/configuration paths remain local and are not served by static-file
-   routes or templates.
-4. A simulated rate-limit response is respected; no early retry or evasion
-   path is taken.
+   captured logs. Use synthetic values wherever the changed code can handle
+   such material.
+3. Session/configuration paths remain local. Where a web server exists, verify
+   that these files are not served by static-file routes or templates.
+4. For changes to Telegram request, rate-limit or retry behavior, including
+   configuration that affects it, a simulated rate-limit response is respected;
+   no early retry or evasion path is taken.
 5. Tests make no live network calls and do not require a real Telegram session.
 
 ## Degenerate Cases
