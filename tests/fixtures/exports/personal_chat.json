@@ -1,0 +1,22 @@
+{
+  "name": "Synthetic Person",
+  "type": "personal_chat",
+  "id": 42424242,
+  "messages": [
+    {
+      "id": 1,
+      "type": "message",
+      "date": "2026-01-01T03:00:00",
+      "date_unixtime": "1767225600",
+      "from": "Synthetic Person",
+      "from_id": "user42424242",
+      "text": "personal message that must never be imported",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "personal message that must never be imported"
+        }
+      ]
+    }
+  ]
+}

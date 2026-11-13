@@ -1,9 +1,15 @@
 import argparse
 import sqlite3
 import sys
+from pathlib import Path
 
 from telegram_knowledge_base.adapters.storage.repository import Repository
 from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
+from telegram_knowledge_base.adapters.telegram_export.parser import parse_export
+from telegram_knowledge_base.application.importing import (
+    SourceDisabledError,
+    import_channel_export,
+)
 from telegram_knowledge_base.config.settings import load_settings
 
 
@@ -21,6 +27,8 @@ def _parser() -> argparse.ArgumentParser:
         command.add_argument("source_id")
     sync = commands.add_parser("sync")
     sync.add_argument("source_id")
+    load = commands.add_parser("import")
+    load.add_argument("path")
     commands.add_parser("status")
     return parser
 
@@ -51,6 +59,18 @@ def main() -> int:
                     arguments.source_id, arguments.source_command == "enable"
                 )
                 print("Source updated.")
+            return 0
+        if arguments.command == "import":
+            try:
+                export = parse_export(Path(arguments.path))
+                report = import_channel_export(repository, export)
+            except (SourceDisabledError, ValueError) as error:
+                print(str(error), file=sys.stderr)
+                return 1
+            print(f"Channel: {report.channel_title}")
+            print(f"New: {report.new_posts}")
+            print(f"Existing: {report.existing_posts}")
+            print(f"Skipped: {report.skipped_messages}")
             return 0
         if arguments.command == "status":
             print(f"Database: {settings.database_path}")

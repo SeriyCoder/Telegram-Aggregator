@@ -25,3 +25,18 @@ class Progress:
     oldest_id: int | None = None
     backfill_complete: bool = False
     next_direction: str = "older"
+
+
+@dataclass(frozen=True, slots=True)
+class ChannelExport:
+    source: Source
+    posts: list[Post]
+    skipped_messages: int
+
+
+@dataclass(frozen=True, slots=True)
+class ImportReport:
+    channel_title: str
+    new_posts: int
+    existing_posts: int
+    skipped_messages: int

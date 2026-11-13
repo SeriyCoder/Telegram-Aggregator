@@ -75,6 +75,81 @@ def test_cooldown_is_persisted_across_repository_instances(
     assert Repository(repository.database).get_cooldown() == deadline
 
 
+def test_imported_private_channel_without_username_is_stored(
+    repository: Repository,
+) -> None:
+    source = Source("987654321", None, "Закрытый синтетический канал", True, False)
+    posts = [Post(7, "единственная запись", "2026-02-01T00:00:00Z")]
+
+    created = repository.save_import(source, posts)
+
+    assert created == 1
+    assert repository.source_enabled("987654321") is True
+    assert repository.list_posts("987654321") == posts
+
+
+def test_repeated_import_creates_no_duplicates_and_keeps_first_version(
+    repository: Repository,
+) -> None:
+    source = Source("1234567890", None, "Synthetic Channel", True, True)
+    original = Post(10, "original text", "2026-01-01T00:00:00Z")
+    assert repository.save_import(source, [original]) == 1
+
+    created = repository.save_import(
+        source,
+        [
+            Post(10, "edited text", "2026-01-01T00:00:00Z"),
+            Post(13, "new post", "2026-01-02T00:00:00Z"),
+        ],
+    )
+
+    assert created == 1
+    assert repository.list_posts("1234567890") == [
+        original,
+        Post(13, "new post", "2026-01-02T00:00:00Z"),
+    ]
+
+
+def test_import_with_invalid_post_changes_nothing(repository: Repository) -> None:
+    source = Source("1234567890", None, "Synthetic Channel", True, True)
+
+    with pytest.raises(ValueError):
+        repository.save_import(
+            source,
+            [
+                Post(10, "valid", "2026-01-01T00:00:00Z"),
+                Post(0, "invalid identifier", "2026-01-01T00:00:00Z"),
+            ],
+        )
+
+    assert repository.source_enabled("1234567890") is None
+    assert repository.count_posts() == 0
+
+
+def test_import_does_not_touch_sync_cursors_or_cooldown(
+    repository: Repository,
+) -> None:
+    source = Source("1234567890", None, "Synthetic Channel", True, True)
+
+    repository.save_import(source, [Post(10, "text", "2026-01-01T00:00:00Z")])
+
+    assert repository.get_progress("1234567890") == Progress()
+    assert repository.get_cooldown() is None
+
+
+def test_source_enabled_distinguishes_missing_and_disabled(
+    repository: Repository,
+) -> None:
+    assert repository.source_enabled("1234567890") is None
+
+    repository.save_import(
+        Source("1234567890", None, "Synthetic Channel", True, True), []
+    )
+    repository.set_enabled("1234567890", False)
+
+    assert repository.source_enabled("1234567890") is False
+
+
 def test_account_lock_excludes_another_process_and_is_released(tmp_path: Path) -> None:
     lock_path = tmp_path / "account.lock"
     environment = os.environ.copy()

@@ -1,0 +1,8 @@
+{
+  "name": "Broken Synthetic Channel",
+  "type": "public_channel",
+  "id": 31337,
+  "messages": [
+    {
+      "id": 1,
+      "type": "message",

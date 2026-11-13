@@ -51,6 +51,43 @@ class Repository:
             ).fetchone()
         return row is not None and bool(row[0])
 
+    def source_enabled(self, source_id: str) -> bool | None:
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT enabled FROM sources WHERE telegram_id = ?", (source_id,)
+            ).fetchone()
+        return None if row is None else bool(row[0])
+
+    def save_import(self, source: Source, posts: list[Post]) -> int:
+        if not source.is_channel:
+            raise ValueError("Only Telegram channels can be imported.")
+        with self._connection() as connection, connection:
+            connection.execute(
+                "INSERT INTO sources (telegram_id, username, title) "
+                "VALUES (?, ?, ?) "
+                "ON CONFLICT (telegram_id) DO UPDATE SET "
+                "username = COALESCE(excluded.username, username), "
+                "title = excluded.title",
+                (source.telegram_id, source.username, source.title),
+            )
+            created = 0
+            for post in posts:
+                if post.message_id < 1 or not post.text or not post.published_at:
+                    raise ValueError("Invalid post data.")
+                cursor = connection.execute(
+                    "INSERT OR IGNORE INTO posts "
+                    "(source_id, message_id, text, published_at) "
+                    "SELECT id, ?, ?, ? FROM sources WHERE telegram_id = ?",
+                    (
+                        post.message_id,
+                        post.text,
+                        post.published_at,
+                        source.telegram_id,
+                    ),
+                )
+                created += cursor.rowcount
+            return created
+
     def commit_batch(
         self, source_id: str, posts: list[Post], progress: Progress
     ) -> None:

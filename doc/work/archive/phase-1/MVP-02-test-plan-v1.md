@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | item | MVP-02 |
-| memo | `doc/work/active/MVP-02-memo.md` |
+| memo | `doc/work/archive/phase-1/MVP-02-memo.md` |
 | created | 2026-11-12 |
 | state | green |
 

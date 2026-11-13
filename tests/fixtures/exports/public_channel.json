@@ -1,0 +1,56 @@
+{
+  "name": "Synthetic Channel",
+  "type": "public_channel",
+  "id": 1234567890,
+  "messages": [
+    {
+      "id": 10,
+      "type": "message",
+      "date": "2026-01-01T03:00:00",
+      "date_unixtime": "1767225600",
+      "text": [
+        "Синтетическая часть один ",
+        {
+          "type": "link",
+          "text": "https://example.invalid/page"
+        }
+      ],
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "Синтетическая часть один "
+        },
+        {
+          "type": "link",
+          "text": "https://example.invalid/page"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "service",
+      "date": "2026-01-01T04:00:00",
+      "date_unixtime": "1767229200",
+      "action": "edit_group_photo",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 12,
+      "type": "message",
+      "date": "2026-01-01T05:00:00",
+      "date_unixtime": "1767232800",
+      "photo": "(File not included. Change data exporting settings to download.)",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 13,
+      "type": "message",
+      "date": "2026-01-02T03:00:00",
+      "date_unixtime": "1767312000",
+      "text": "Plain synthetic post",
+      "text_entities": []
+    }
+  ]
+}

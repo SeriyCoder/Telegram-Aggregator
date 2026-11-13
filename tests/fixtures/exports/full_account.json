@@ -1,0 +1,19 @@
+{
+  "about": "Here is all your data.",
+  "personal_information": {
+    "user_id": 42424242,
+    "first_name": "Synthetic",
+    "last_name": "User"
+  },
+  "chats": {
+    "about": "Chat history export.",
+    "list": [
+      {
+        "name": "Synthetic Channel",
+        "type": "public_channel",
+        "id": 1234567890,
+        "messages": []
+      }
+    ]
+  }
+}

@@ -27,3 +27,7 @@ data/
 *.sqlite3
 *.sqlite-wal
 *.sqlite-shm
+
+# Telegram Desktop chat exports (never commit collected content)
+ChatExport_*/
+result.json
