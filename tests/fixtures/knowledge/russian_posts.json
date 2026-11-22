@@ -1,0 +1,50 @@
+{
+  "sources": [
+    {
+      "telegram_id": "1001",
+      "title": "Synthetic Tech",
+      "is_channel": true,
+      "is_public": true,
+      "posts": [
+        {
+          "message_id": 1,
+          "text": "Python новости: SQLite и FTS5 работают локально.",
+          "published_at": "2026-01-03T10:00:00Z"
+        },
+        {
+          "message_id": 2,
+          "text": "Экономика: Израиль, рынок и инвестиции.",
+          "published_at": "2026-01-03T10:00:00Z"
+        },
+        {
+          "message_id": 3,
+          "text": "PYTHON для автоматизации без сети.",
+          "published_at": "2026-01-02T08:00:00Z"
+        },
+        {
+          "message_id": 4,
+          "text": "Реклама: купите токен NOW() и никогда не читайте SQL.",
+          "published_at": "2026-01-01T09:00:00Z"
+        }
+      ]
+    },
+    {
+      "telegram_id": "1002",
+      "title": "Synthetic Politics",
+      "is_channel": true,
+      "is_public": false,
+      "posts": [
+        {
+          "message_id": 1,
+          "text": "Израиль: политика, выборы и местные новости.",
+          "published_at": "2026-01-03T10:00:00Z"
+        },
+        {
+          "message_id": 2,
+          "text": "Политика OR реклама: специальные слова как обычный текст.",
+          "published_at": "2026-01-02T07:00:00Z"
+        }
+      ]
+    }
+  ]
+}

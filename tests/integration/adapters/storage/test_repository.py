@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 import subprocess
@@ -10,7 +11,7 @@ import pytest
 from telegram_knowledge_base.adapters.storage.lock import AccountLock
 from telegram_knowledge_base.adapters.storage.repository import Repository
 from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
-from telegram_knowledge_base.domain.models import Post, Progress, Source
+from telegram_knowledge_base.domain.models import Post, PostQuery, Progress, Source
 
 
 @pytest.fixture
@@ -18,6 +19,34 @@ def repository(tmp_path: Path) -> Repository:
     database = tmp_path / "knowledge.sqlite3"
     initialize_database(database)
     return Repository(database)
+
+
+@pytest.fixture
+def knowledge_repository(tmp_path: Path) -> Repository:
+    database = tmp_path / "knowledge.sqlite3"
+    initialize_database(database)
+    repository = Repository(database)
+    fixture = (
+        Path(__file__).resolve().parents[3]
+        / "fixtures"
+        / "knowledge"
+        / "russian_posts.json"
+    )
+    document = json.loads(fixture.read_text(encoding="utf-8"))
+    for item in document["sources"]:
+        source = Source(
+            item["telegram_id"],
+            None,
+            item["title"],
+            item["is_channel"],
+            item["is_public"],
+        )
+        posts = [
+            Post(post["message_id"], post["text"], post["published_at"])
+            for post in item["posts"]
+        ]
+        repository.save_import(source, posts)
+    return repository
 
 
 def test_sources_can_be_enabled_and_disabled(repository: Repository) -> None:
@@ -205,6 +234,269 @@ def test_invalid_discussion_import_rolls_back_source_and_posts(
 
     assert repository.source_enabled("700000001") is True
     assert repository.list_posts("700000001") == [original]
+
+
+def test_tags_can_be_created_from_scratch_and_listed(
+    knowledge_repository: Repository,
+) -> None:
+    tag = knowledge_repository.create_tag("Python", "python", "#3572A5")
+    second = knowledge_repository.create_tag("Израиль", "израиль", None)
+
+    assert tag.name == "Python"
+    assert tag.key == "python"
+    assert knowledge_repository.list_tags() == [tag, second]
+
+
+def test_tag_keys_are_unique_without_text_in_the_error(
+    knowledge_repository: Repository,
+) -> None:
+    secret = "private-python-name"
+    knowledge_repository.create_tag(secret, "python", None)
+
+    with pytest.raises(ValueError) as error:
+        knowledge_repository.create_tag("Other private name", "python", None)
+
+    assert secret not in str(error.value)
+    assert "Other private name" not in str(error.value)
+
+
+def test_automatic_tags_recompute_for_existing_posts_and_respect_enabled(
+    knowledge_repository: Repository,
+) -> None:
+    tag = knowledge_repository.create_tag("Python", "python", None)
+    rule = knowledge_repository.create_tag_rule(tag.id, "python")
+
+    before = knowledge_repository.query_posts(PostQuery(tag_keys=("python",)))
+    assert [(record.source_id, record.post.message_id) for record in before.items] == [
+        ("1001", 1),
+        ("1001", 3),
+    ]
+
+    knowledge_repository.set_tag_rule_enabled(rule.id, False)
+    after = knowledge_repository.query_posts(PostQuery(tag_keys=("python",)))
+    assert after.items == []
+
+
+def test_manual_tag_survives_disabling_automatic_rule(
+    knowledge_repository: Repository,
+) -> None:
+    tag = knowledge_repository.create_tag("Python", "python", None)
+    rule = knowledge_repository.create_tag_rule(tag.id, "python")
+    knowledge_repository.set_manual_tag("1001", 1, tag.id, True)
+    knowledge_repository.set_tag_rule_enabled(rule.id, False)
+
+    page = knowledge_repository.query_posts(PostQuery(tag_keys=("python",)))
+
+    assert [(item.source_id, item.post.message_id) for item in page.items] == [
+        ("1001", 1)
+    ]
+    assert page.items[0].manual_tag_ids == frozenset({tag.id})
+
+
+def test_filter_include_rules_are_or_and_exclude_is_applied_after(
+    knowledge_repository: Repository,
+) -> None:
+    knowledge_repository.create_filter_rule("include", "python")
+    knowledge_repository.create_filter_rule("include", "Израиль")
+    knowledge_repository.create_filter_rule("exclude", "реклама")
+
+    page = knowledge_repository.query_posts(PostQuery())
+
+    assert [(item.source_id, item.post.message_id) for item in page.items] == [
+        ("1001", 1),
+        ("1001", 2),
+        ("1002", 1),
+        ("1001", 3),
+    ]
+
+
+def test_disabling_the_only_include_filter_restores_non_excluded_posts(
+    knowledge_repository: Repository,
+) -> None:
+    include = knowledge_repository.create_filter_rule("include", "python")
+    knowledge_repository.create_filter_rule("exclude", "реклама")
+    knowledge_repository.set_filter_rule_enabled(include.id, False)
+
+    page = knowledge_repository.query_posts(PostQuery())
+
+    assert len(page.items) == 4
+    assert all("реклама" not in record.post.text.casefold() for record in page.items)
+
+
+def test_multiple_selected_tags_are_combined_with_or(
+    knowledge_repository: Repository,
+) -> None:
+    python_tag = knowledge_repository.create_tag("Python", "python", None)
+    israel_tag = knowledge_repository.create_tag("Израиль", "израиль", None)
+    knowledge_repository.create_tag_rule(python_tag.id, "python")
+    knowledge_repository.create_tag_rule(israel_tag.id, "израиль")
+
+    page = knowledge_repository.query_posts(PostQuery(tag_keys=("python", "израиль")))
+
+    assert {(item.source_id, item.post.message_id) for item in page.items} == {
+        ("1001", 1),
+        ("1001", 2),
+        ("1001", 3),
+        ("1002", 1),
+    }
+
+
+def test_full_text_search_handles_cyrillic_case_and_and_tokens(
+    knowledge_repository: Repository,
+) -> None:
+    cyrillic = knowledge_repository.query_posts(PostQuery(text="ИЗРАИЛЬ"))
+    conjunction = knowledge_repository.query_posts(PostQuery(text="python sqlite"))
+
+    assert len(cyrillic.items) == 2
+    assert [(item.source_id, item.post.message_id) for item in conjunction.items] == [
+        ("1001", 1)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("search", "expected"),
+    [
+        ("OR", [("1002", 2)]),
+        ("NOW()", [("1001", 4)]),
+        ('"python"', [("1001", 1), ("1001", 3)]),
+        ("нет совпадений", []),
+    ],
+)
+def test_search_treats_special_input_as_literal_text_not_syntax(
+    knowledge_repository: Repository,
+    search: str,
+    expected: list[tuple[str, int]],
+) -> None:
+    page = knowledge_repository.query_posts(PostQuery(text=search))
+
+    assert [(item.source_id, item.post.message_id) for item in page.items] == expected
+
+
+def test_empty_search_query_returns_the_unsearched_filtered_feed(
+    knowledge_repository: Repository,
+) -> None:
+    plain = knowledge_repository.query_posts(PostQuery())
+    punctuation = knowledge_repository.query_posts(PostQuery(text=" --- !!! "))
+
+    assert [item.post.message_id for item in plain.items] == [
+        item.post.message_id for item in punctuation.items
+    ]
+    assert len(plain.items) == 6
+
+
+def test_fts_stays_in_sync_after_insert_update_and_delete(
+    knowledge_repository: Repository,
+) -> None:
+    source = Source("1001", None, "Synthetic Tech", True, True)
+    knowledge_repository.save_import(
+        source,
+        [Post(5, "новый редкий термин", "2026-01-04T10:00:00Z")],
+    )
+    assert (
+        len(knowledge_repository.query_posts(PostQuery(text="редкий термин")).items)
+        == 1
+    )
+
+    with sqlite3.connect(knowledge_repository.database) as connection:
+        connection.execute(
+            "UPDATE posts SET text = ? "
+            "WHERE source_id = (SELECT id FROM sources WHERE telegram_id = ?) "
+            "AND message_id = ?",
+            ("заменённый текст", "1001", 5),
+        )
+        connection.execute(
+            "DELETE FROM posts WHERE source_id = "
+            "(SELECT id FROM sources WHERE telegram_id = ?) AND message_id = ?",
+            ("1001", 1),
+        )
+
+    assert knowledge_repository.query_posts(PostQuery(text="редкий")).items == []
+    assert (
+        knowledge_repository.query_posts(PostQuery(text="заменённый"))
+        .items[0]
+        .post.message_id
+        == 5
+    )
+    assert knowledge_repository.query_posts(PostQuery(text="sqlite")).items == []
+
+
+def test_bookmarks_are_idempotent_and_can_filter_the_feed(
+    knowledge_repository: Repository,
+) -> None:
+    knowledge_repository.set_bookmark("1001", 2, True)
+    knowledge_repository.set_bookmark("1001", 2, True)
+    page = knowledge_repository.query_posts(PostQuery(bookmarked_only=True))
+
+    assert [(item.source_id, item.post.message_id) for item in page.items] == [
+        ("1001", 2)
+    ]
+    assert page.items[0].bookmarked is True
+
+    knowledge_repository.set_bookmark("1001", 2, False)
+    knowledge_repository.set_bookmark("1001", 2, False)
+    assert knowledge_repository.query_posts(PostQuery(bookmarked_only=True)).items == []
+
+
+def test_query_combines_source_date_search_tag_and_bookmark(
+    knowledge_repository: Repository,
+) -> None:
+    tag = knowledge_repository.create_tag("Python", "python", None)
+    knowledge_repository.create_tag_rule(tag.id, "python")
+    knowledge_repository.set_bookmark("1001", 1, True)
+
+    page = knowledge_repository.query_posts(
+        PostQuery(
+            text="sqlite",
+            source_id="1001",
+            published_from="2026-01-03T00:00:00Z",
+            published_to="2026-01-03T23:59:59Z",
+            tag_keys=("python",),
+            bookmarked_only=True,
+        )
+    )
+
+    assert [(item.source_id, item.post.message_id) for item in page.items] == [
+        ("1001", 1)
+    ]
+
+
+def test_pagination_is_stable_for_equal_dates_and_has_no_duplicates(
+    knowledge_repository: Repository,
+) -> None:
+    seen: list[tuple[str, int]] = []
+    cursor = None
+
+    while True:
+        page = knowledge_repository.query_posts(PostQuery(limit=2, cursor=cursor))
+        seen.extend((item.source_id, item.post.message_id) for item in page.items)
+        if page.next_cursor is None:
+            break
+        cursor = page.next_cursor
+
+    assert len(seen) == 6
+    assert len(set(seen)) == 6
+    assert seen[:3] == [("1001", 1), ("1001", 2), ("1002", 1)]
+
+
+def test_search_results_do_not_expose_commenter_fields_or_file_paths(
+    knowledge_repository: Repository,
+) -> None:
+    page = knowledge_repository.query_posts(PostQuery(text="python"))
+
+    rendered = repr(page)
+    assert "user987654321" not in rendered
+    assert "Private Synthetic Participant" not in rendered
+    assert str(knowledge_repository.database) not in rendered
+
+
+def test_query_does_not_touch_sync_cursors_or_cooldown(
+    knowledge_repository: Repository,
+) -> None:
+    knowledge_repository.query_posts(PostQuery(text="python"))
+
+    assert knowledge_repository.get_cooldown() is None
+    with sqlite3.connect(knowledge_repository.database) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM sync_state").fetchone() == (0,)
 
 
 def test_account_lock_excludes_another_process_and_is_released(tmp_path: Path) -> None:

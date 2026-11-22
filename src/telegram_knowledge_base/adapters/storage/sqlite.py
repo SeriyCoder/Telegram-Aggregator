@@ -2,10 +2,11 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 _MIGRATIONS = {
     1: Path(__file__).with_name("migrations") / "0001_initial.sql",
     2: Path(__file__).with_name("migrations") / "0002_sync.sql",
+    3: Path(__file__).with_name("migrations") / "0003_knowledge.sql",
 }
 
 

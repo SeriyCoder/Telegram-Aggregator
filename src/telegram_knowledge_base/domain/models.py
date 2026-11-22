@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Literal
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,3 +52,55 @@ class ImportReport:
     @property
     def source_title(self) -> str:
         return self.channel_title
+
+
+@dataclass(frozen=True, slots=True)
+class Tag:
+    id: int
+    name: str
+    key: str
+    color: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class TagRule:
+    id: int
+    tag_id: int
+    phrase: str
+    enabled: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class FilterRule:
+    id: int
+    kind: Literal["include", "exclude"]
+    phrase: str
+    enabled: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class PostQuery:
+    text: str | None = None
+    source_id: str | None = None
+    published_from: str | None = None
+    published_to: str | None = None
+    tag_keys: tuple[str, ...] = ()
+    bookmarked_only: bool = False
+    limit: int = 50
+    cursor: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class PostRecord:
+    source_id: str
+    source_title: str
+    post: Post
+    tags: tuple[Tag, ...] = ()
+    manual_tag_ids: frozenset[int] = frozenset()
+    bookmarked: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class PostPage:
+    items: list[PostRecord]
+    next_cursor: str | None = None
