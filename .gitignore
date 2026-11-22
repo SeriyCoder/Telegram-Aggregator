@@ -20,6 +20,7 @@ dist/
 *.session
 *.session-journal
 
+
 # Private application data and local databases
 data/
 *.db
@@ -27,6 +28,7 @@ data/
 *.sqlite3
 *.sqlite-wal
 *.sqlite-shm
+C:\Users\Ser-Co\OneDrive\Documents\VS_Code_Project\Telegram_Knowlage_Base\tests\data
 
 # Telegram Desktop chat exports (never commit collected content)
 ChatExport_*/

@@ -67,7 +67,7 @@ def main() -> int:
             except (SourceDisabledError, ValueError) as error:
                 print(str(error), file=sys.stderr)
                 return 1
-            print(f"Channel: {report.channel_title}")
+            print(f"Source: {report.source_title}")
             print(f"New: {report.new_posts}")
             print(f"Existing: {report.existing_posts}")
             print(f"Skipped: {report.skipped_messages}")
@@ -90,4 +90,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
     raise SystemExit(main())

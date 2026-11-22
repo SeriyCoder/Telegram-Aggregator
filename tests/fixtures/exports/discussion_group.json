@@ -1,0 +1,107 @@
+{
+  "name": "Synthetic Discussion Group",
+  "type": "public_supergroup",
+  "id": 700000001,
+  "messages": [
+    {
+      "id": 101,
+      "type": "message",
+      "date": "2026-03-01T03:00:00",
+      "date_unixtime": "1772334000",
+      "from": "Synthetic Channel",
+      "from_id": "channel100000001",
+      "saved_from": "Synthetic Channel",
+      "forwarded_from": "Synthetic Channel",
+      "forwarded_from_id": "channel100000001",
+      "text": "synthetic channel post",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "synthetic channel post"
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "type": "message",
+      "date": "2026-03-01T04:00:00",
+      "date_unixtime": "1772337600",
+      "from": "Synthetic Channel",
+      "from_id": "channel100000001",
+      "saved_from": "Synthetic Channel",
+      "forwarded_from": "Synthetic Channel",
+      "forwarded_from_id": "channel100000001",
+      "photo": "photo-not-exported.jpg",
+      "text": "synthetic caption attached to a photo",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "synthetic caption attached to a photo"
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "type": "message",
+      "date": "2026-03-01T05:00:00",
+      "date_unixtime": "1772341200",
+      "from": "Private Synthetic Participant",
+      "from_id": "user987654321",
+      "reply_to_message_id": 101,
+      "text": "private synthetic comment that must be skipped",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "private synthetic comment that must be skipped"
+        }
+      ],
+      "reactions": [
+        {
+          "type": "emoji",
+          "count": 1,
+          "emoji": "+"
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "type": "message",
+      "date": "2026-03-01T06:00:00",
+      "date_unixtime": "1772344800",
+      "from": "Another Synthetic Source",
+      "from_id": "channel200000002",
+      "forwarded_from": "Another Synthetic Source",
+      "forwarded_from_id": "channel200000002",
+      "text": "forwarded message that is not an original channel post",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "forwarded message that is not an original channel post"
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "type": "service",
+      "date": "2026-03-01T07:00:00",
+      "date_unixtime": "1772348400",
+      "action": "pin_message",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 106,
+      "type": "message",
+      "date": "2026-03-01T08:00:00",
+      "date_unixtime": "1772352000",
+      "from": "Synthetic Channel",
+      "from_id": "channel100000001",
+      "saved_from": "Synthetic Channel",
+      "forwarded_from": "Synthetic Channel",
+      "forwarded_from_id": "channel100000001",
+      "photo": "photo-only-not-exported.jpg",
+      "text": "",
+      "text_entities": []
+    }
+  ]
+}

@@ -233,3 +233,98 @@ def test_import_into_disabled_source_is_refused(
     assert main() == 1
     assert capsys.readouterr().err
     assert Repository(load_settings().database_path).count_posts() == 2
+
+
+def test_discussion_group_import_reports_only_safe_counts(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from telegram_knowledge_base.__main__ import main
+    from telegram_knowledge_base.adapters.storage.repository import Repository
+    from telegram_knowledge_base.config.settings import load_settings
+
+    monkeypatch.setenv("TKB_DATA_DIR", str(tmp_path / "data"))
+    export = str(FIXTURES / "discussion_group.json")
+    monkeypatch.setattr(sys, "argv", ["telegram_knowledge_base", "import", export])
+
+    assert main() == 0
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert "Source: Synthetic Discussion Group" in output.out
+    assert "New: 2" in output.out
+    assert "Existing: 0" in output.out
+    assert "Skipped: 4" in output.out
+    assert "synthetic channel post" not in output.out
+    assert "private synthetic comment" not in output.out
+    assert "Private Synthetic Participant" not in output.out
+    assert "user987654321" not in output.out
+    repository = Repository(load_settings().database_path)
+    assert repository.count_posts() == 2
+    assert [post.message_id for post in repository.list_posts("700000001")] == [
+        101,
+        102,
+    ]
+
+
+def test_repeated_discussion_group_import_reports_existing_posts(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from telegram_knowledge_base.__main__ import main
+    from telegram_knowledge_base.adapters.storage.repository import Repository
+    from telegram_knowledge_base.config.settings import load_settings
+
+    monkeypatch.setenv("TKB_DATA_DIR", str(tmp_path / "data"))
+    export = str(FIXTURES / "discussion_group.json")
+    monkeypatch.setattr(sys, "argv", ["telegram_knowledge_base", "import", export])
+    assert main() == 0
+    capsys.readouterr()
+
+    assert main() == 0
+    output = capsys.readouterr().out
+    assert "New: 0" in output
+    assert "Existing: 2" in output
+    assert "Skipped: 4" in output
+    assert Repository(load_settings().database_path).count_posts() == 2
+
+
+def test_discussion_import_does_not_load_telegram_or_network_adapter(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from telegram_knowledge_base.__main__ import main
+
+    monkeypatch.setenv("TKB_DATA_DIR", str(tmp_path / "data"))
+    export = str(FIXTURES / "discussion_group.json")
+    monkeypatch.setattr(sys, "argv", ["telegram_knowledge_base", "import", export])
+    before = set(sys.modules)
+
+    assert main() == 0
+    loaded = set(sys.modules) - before
+    assert not any(
+        name == "telethon"
+        or name.startswith("telethon.")
+        or name.startswith("telegram_knowledge_base.adapters.telegram.")
+        for name in loaded
+    )
+
+
+def test_unmarked_group_refusal_does_not_reveal_members_or_comments(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from telegram_knowledge_base.__main__ import main
+
+    monkeypatch.setenv("TKB_DATA_DIR", str(tmp_path / "data"))
+    export = str(FIXTURES / "group.json")
+    monkeypatch.setattr(sys, "argv", ["telegram_knowledge_base", "import", export])
+
+    assert main() == 1
+    output = capsys.readouterr()
+    combined = output.out + output.err
+    assert "Synthetic Member" not in combined
+    assert "user100" not in combined
+    assert "group message that must never be imported" not in combined

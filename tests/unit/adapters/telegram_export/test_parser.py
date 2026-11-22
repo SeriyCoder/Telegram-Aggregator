@@ -7,6 +7,7 @@ from telegram_knowledge_base.adapters.telegram_export.parser import (
     ExportFormatError,
     parse_export,
 )
+from telegram_knowledge_base.domain.models import ExportKind
 
 FIXTURES = Path(__file__).parents[3] / "fixtures" / "exports"
 
@@ -101,3 +102,84 @@ def test_file_above_size_limit_is_rejected_before_reading(
 
     with pytest.raises(ExportFormatError):
         parse_export(FIXTURES / "public_channel.json")
+
+
+def test_discussion_group_selects_only_original_channel_posts() -> None:
+    export = parse_export(FIXTURES / "discussion_group.json")
+
+    assert export.kind is ExportKind.DISCUSSION_GROUP
+    assert export.source.telegram_id == "700000001"
+    assert export.source.title == "Synthetic Discussion Group"
+    assert export.source.is_channel is False
+    assert export.source.is_public is True
+    assert [post.message_id for post in export.posts] == [101, 102]
+    assert [post.text for post in export.posts] == [
+        "synthetic channel post",
+        "synthetic caption attached to a photo",
+    ]
+    assert export.skipped_messages == 4
+
+
+def test_discussion_group_keeps_original_post_times_in_utc() -> None:
+    export = parse_export(FIXTURES / "discussion_group.json")
+
+    assert [post.published_at for post in export.posts] == [
+        "2026-03-01T03:00:00Z",
+        "2026-03-01T04:00:00Z",
+    ]
+
+
+def test_private_discussion_group_is_accepted(
+    tmp_path: Path,
+) -> None:
+    original = (FIXTURES / "discussion_group.json").read_text(encoding="utf-8")
+    private_export = tmp_path / "private_discussion.json"
+    private_export.write_text(
+        original.replace('"type": "public_supergroup"', '"type": "private_supergroup"'),
+        encoding="utf-8",
+    )
+
+    export = parse_export(private_export)
+
+    assert export.kind is ExportKind.DISCUSSION_GROUP
+    assert export.source.is_public is False
+    assert len(export.posts) == 2
+
+
+def test_discussion_group_marker_requires_channel_forward_identifier(
+    tmp_path: Path,
+) -> None:
+    invalid = tmp_path / "invalid_discussion.json"
+    invalid.write_text(
+        '{"name":"Unverified Group","type":"public_supergroup","id":7,'
+        '"messages":[{"id":1,"type":"message","date_unixtime":"1767225600",'
+        '"saved_from":"Private Participant","from":"Private Participant",'
+        '"from_id":"user987654321","text":"private synthetic content",'
+        '"text_entities":[{"type":"plain","text":"private synthetic content"}]}]}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ExportFormatError) as error:
+        parse_export(invalid)
+
+    assert "private synthetic content" not in str(error.value)
+    assert "Private Participant" not in str(error.value)
+    assert "987654321" not in str(error.value)
+
+
+def test_discussion_group_without_selected_posts_is_rejected() -> None:
+    with pytest.raises(ExportFormatError):
+        parse_export(FIXTURES / "group.json")
+
+
+def test_discussion_group_result_has_no_participant_fields() -> None:
+    export = parse_export(FIXTURES / "discussion_group.json")
+
+    for post in export.posts:
+        assert not hasattr(post, "author")
+        assert not hasattr(post, "author_id")
+        assert not hasattr(post, "reply_to_message_id")
+        assert not hasattr(post, "reactions")
+    rendered = repr(export)
+    assert "Private Synthetic Participant" not in rendered
+    assert "user987654321" not in rendered

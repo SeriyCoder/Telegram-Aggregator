@@ -1,5 +1,9 @@
 from telegram_knowledge_base.application.ports import ImportStore
-from telegram_knowledge_base.domain.models import ChannelExport, ImportReport
+from telegram_knowledge_base.domain.models import (
+    ChannelExport,
+    ExportKind,
+    ImportReport,
+)
 
 
 class SourceDisabledError(Exception):
@@ -8,7 +12,11 @@ class SourceDisabledError(Exception):
 
 def import_channel_export(store: ImportStore, export: ChannelExport) -> ImportReport:
     source = export.source
-    if not source.is_channel:
+    valid_channel = export.kind is ExportKind.CHANNEL and source.is_channel
+    valid_discussion = (
+        export.kind is ExportKind.DISCUSSION_GROUP and not source.is_channel
+    )
+    if not valid_channel and not valid_discussion:
         raise ValueError("Only channel exports can be imported.")
     if store.source_enabled(source.telegram_id) is False:
         raise SourceDisabledError(

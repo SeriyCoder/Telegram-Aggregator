@@ -150,6 +150,63 @@ def test_source_enabled_distinguishes_missing_and_disabled(
     assert repository.source_enabled("1234567890") is False
 
 
+def test_discussion_group_can_store_original_channel_posts(
+    repository: Repository,
+) -> None:
+    discussion = Source("700000001", None, "Synthetic Discussion Group", False, True)
+    posts = [
+        Post(101, "channel post", "2026-03-01T03:00:00Z"),
+        Post(102, "caption", "2026-03-01T04:00:00Z"),
+    ]
+
+    assert repository.save_import(discussion, posts) == 2
+    assert repository.source_enabled("700000001") is True
+    assert repository.list_posts("700000001") == posts
+
+
+def test_repeated_discussion_import_preserves_the_first_post_version(
+    repository: Repository,
+) -> None:
+    discussion = Source("700000001", None, "Synthetic Discussion Group", False, True)
+    original = Post(101, "original post", "2026-03-01T03:00:00Z")
+    repository.save_import(discussion, [original])
+
+    assert (
+        repository.save_import(
+            discussion,
+            [
+                Post(101, "edited post", "2026-03-01T03:00:00Z"),
+                Post(102, "new post", "2026-03-01T04:00:00Z"),
+            ],
+        )
+        == 1
+    )
+    assert repository.list_posts("700000001") == [
+        original,
+        Post(102, "new post", "2026-03-01T04:00:00Z"),
+    ]
+
+
+def test_invalid_discussion_import_rolls_back_source_and_posts(
+    repository: Repository,
+) -> None:
+    discussion = Source("700000001", None, "Synthetic Discussion Group", False, True)
+    original = Post(101, "original post", "2026-03-01T03:00:00Z")
+    assert repository.save_import(discussion, [original]) == 1
+
+    with pytest.raises(ValueError):
+        repository.save_import(
+            discussion,
+            [
+                Post(102, "valid post", "2026-03-01T04:00:00Z"),
+                Post(0, "invalid", "2026-03-01T05:00:00Z"),
+            ],
+        )
+
+    assert repository.source_enabled("700000001") is True
+    assert repository.list_posts("700000001") == [original]
+
+
 def test_account_lock_excludes_another_process_and_is_released(tmp_path: Path) -> None:
     lock_path = tmp_path / "account.lock"
     environment = os.environ.copy()

@@ -7,7 +7,7 @@
 | stage | idle |
 | active_memo | — |
 | last_audit | never |
-| updated | 2026-11-13 |
+| updated | 2026-11-22 |
 | contour_size | Full |
 
 ## Closed Items Log
@@ -16,3 +16,4 @@
 | --- | --- | --- | --- |
 | 2026-11-12 | MVP-01 | Создание Python-инструментария и безопасной локальной конфигурации | `doc/work/archive/phase-1/MVP-01-memo.md`, `MVP-01-test-plan.md` |
 | 2026-11-13 | MVP-02 | Импорт публикаций каналов из официального экспорта Telegram | `doc/work/archive/phase-1/MVP-02-memo.md`, `MVP-02-test-plan.md`, `MVP-02-test-plan-v1.md` |
+| 2026-11-22 | MVP-05 | Исходные посты канала из экспорта связанной группы обсуждения | `doc/work/archive/phase-1/MVP-05-memo.md`, `MVP-05-test-plan.md` |

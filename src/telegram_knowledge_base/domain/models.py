@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import StrEnum
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,11 +28,17 @@ class Progress:
     next_direction: str = "older"
 
 
+class ExportKind(StrEnum):
+    CHANNEL = "channel"
+    DISCUSSION_GROUP = "discussion_group"
+
+
 @dataclass(frozen=True, slots=True)
 class ChannelExport:
     source: Source
     posts: list[Post]
     skipped_messages: int
+    kind: ExportKind = ExportKind.CHANNEL
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,3 +47,7 @@ class ImportReport:
     new_posts: int
     existing_posts: int
     skipped_messages: int
+
+    @property
+    def source_title(self) -> str:
+        return self.channel_title

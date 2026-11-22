@@ -59,8 +59,6 @@ class Repository:
         return None if row is None else bool(row[0])
 
     def save_import(self, source: Source, posts: list[Post]) -> int:
-        if not source.is_channel:
-            raise ValueError("Only Telegram channels can be imported.")
         with self._connection() as connection, connection:
             connection.execute(
                 "INSERT INTO sources (telegram_id, username, title) "

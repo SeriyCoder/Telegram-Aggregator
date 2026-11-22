@@ -4,7 +4,12 @@ from telegram_knowledge_base.application.importing import (
     SourceDisabledError,
     import_channel_export,
 )
-from telegram_knowledge_base.domain.models import ChannelExport, Post, Source
+from telegram_knowledge_base.domain.models import (
+    ChannelExport,
+    ExportKind,
+    Post,
+    Source,
+)
 
 CHANNEL = Source("1234567890", None, "Synthetic Channel", True, True)
 POSTS = [
@@ -78,3 +83,35 @@ def test_empty_channel_export_reports_zero_counts() -> None:
     assert report.new_posts == 0
     assert report.existing_posts == 0
     assert report.skipped_messages == 0
+
+
+def test_discussion_channel_posts_are_imported_without_comment_data() -> None:
+    group = Source("700000001", None, "Synthetic Discussion Group", False, True)
+    store = Store(enabled=None)
+    export = ChannelExport(
+        group,
+        POSTS,
+        skipped_messages=4,
+        kind=ExportKind.DISCUSSION_GROUP,
+    )
+
+    report = import_channel_export(store, export)
+
+    assert store.saved == [(group, POSTS)]
+    assert report.channel_title == "Synthetic Discussion Group"
+    assert report.new_posts == 2
+    assert report.existing_posts == 0
+    assert report.skipped_messages == 4
+
+
+def test_unverified_non_channel_export_is_still_rejected() -> None:
+    group = Source("700000001", None, "Unverified Group", False, True)
+    store = Store(enabled=None)
+
+    with pytest.raises(ValueError):
+        import_channel_export(
+            store,
+            ChannelExport(group, POSTS, 0, kind=ExportKind.CHANNEL),
+        )
+
+    assert store.saved == []
