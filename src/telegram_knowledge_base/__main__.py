@@ -3,6 +3,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
+from telegram_knowledge_base.adapters.storage.lock import AccountLock
 from telegram_knowledge_base.adapters.storage.repository import Repository
 from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
 from telegram_knowledge_base.adapters.telegram_export.parser import parse_export
@@ -29,6 +30,7 @@ def _parser() -> argparse.ArgumentParser:
     sync.add_argument("source_id")
     load = commands.add_parser("import")
     load.add_argument("path")
+    commands.add_parser("web")
     commands.add_parser("status")
     return parser
 
@@ -49,6 +51,19 @@ def main() -> int:
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         initialize_database(settings.database_path)
         repository = Repository(settings.database_path)
+        if arguments.command == "web":
+            from uvicorn import run
+
+            from telegram_knowledge_base.web.app import create_app
+
+            with AccountLock(settings.data_dir / "web-server.lock"):
+                run(
+                    create_app(settings),
+                    host=settings.web_host,
+                    port=settings.web_port,
+                    log_config=None,
+                )
+            return 0
         if arguments.command == "source":
             if arguments.source_command == "list":
                 for source in repository.list_sources():

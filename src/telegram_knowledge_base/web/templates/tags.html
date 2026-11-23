@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Теги{% endblock %}
+{% block content %}
+<h1>Теги и автоправила</h1>
+<section class="panel">
+  <form class="inline-create" method="post" action="/tags">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Название тега<input name="name" required></label>
+    <label>Цвет<input name="color" type="color" value="#3b82f6"></label>
+    <button type="submit">Создать</button>
+  </form>
+</section>
+<section class="card-grid">
+  {% for tag in tags %}
+  <article class="tag-card">
+    <h2>{{ tag.name }}</h2>
+    <p class="muted">{{ tag.key }}</p>
+    <form method="post" action="/tags/{{ tag.id }}/rules">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Буквальная фраза<input name="phrase" required></label>
+      <button type="submit">Добавить правило</button>
+    </form>
+    <ul>
+      {% for rule in rules[tag.id] %}
+      <li>
+        {{ rule.phrase }}
+        <form class="inline-form" method="post" action="/tag-rules/{{ rule.id }}/toggle">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" name="enabled" value="{% if not rule.enabled %}on{% endif %}">
+            {% if rule.enabled %}Отключить{% else %}Включить{% endif %}
+          </button>
+        </form>
+        <form class="inline-form" method="post" action="/tag-rules/{{ rule.id }}/delete">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="danger">Удалить</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="/tags/{{ tag.id }}/delete">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="danger">Удалить тег</button>
+    </form>
+  </article>
+  {% else %}
+  <p class="empty">Тегов пока нет. Создайте первый тег из собственных интересов.</p>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Фильтры{% endblock %}
+{% block content %}
+<h1>Правила ленты</h1>
+<section class="panel">
+  <form method="post" action="/filters">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Тип
+      <select name="kind"><option value="include">Включить</option><option value="exclude">Исключить</option></select>
+    </label>
+    <label>Буквальная фраза<input name="phrase" required></label>
+    <button type="submit">Создать правило</button>
+  </form>
+</section>
+<section class="rule-list">
+  {% for rule in rules %}
+  <article class="panel">
+    <strong>{{ rule.kind }}</strong>
+    <span>{{ rule.phrase }}</span>
+    <form class="inline-form" method="post" action="/filters/{{ rule.id }}/toggle">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" name="enabled" value="{% if not rule.enabled %}on{% endif %}">
+        {% if rule.enabled %}Отключить{% else %}Включить{% endif %}
+      </button>
+    </form>
+    <form class="inline-form" method="post" action="/filters/{{ rule.id }}/delete">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="danger" type="submit">Удалить</button>
+    </form>
+  </article>
+  {% else %}
+  <p class="empty">Правил пока нет: показываются все посты.</p>
+  {% endfor %}
+</section>
+{% endblock %}

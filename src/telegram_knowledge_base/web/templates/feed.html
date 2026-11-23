@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Лента{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Локальная база</p>
+    <h1>Публикации</h1>
+  </div>
+</section>
+<form class="filter-bar" method="get" action="/">
+  <label>Поиск
+    <input type="search" name="q" value="{{ filters.get('q', '') }}" placeholder="Слова из публикации">
+  </label>
+  <label>Источник
+    <select name="source">
+      <option value="">Все источники</option>
+      {% for source in sources %}
+      <option value="{{ source.telegram_id }}" {% if filters.get('source') == source.telegram_id %}selected{% endif %}>{{ source.title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>С даты
+    <input type="datetime-local" name="from" value="{{ filters.get('from', '') }}">
+  </label>
+  <label>По дату
+    <input type="datetime-local" name="to" value="{{ filters.get('to', '') }}">
+  </label>
+  <label>Теги
+    <input name="tags" value="{{ filters.get('tags', '') }}" placeholder="python, политика">
+  </label>
+  <label class="check-row">
+    <input type="checkbox" name="bookmarked" {% if filters.get('bookmarked') == 'on' %}checked{% endif %}>
+    Только закладки
+  </label>
+  <button type="submit">Применить</button>
+  <a class="button secondary" href="/">Очистить</a>
+</form>
+
+<section class="feed" aria-label="Публикации">
+  {% for record in page.items %}
+  <article class="post">
+    <header>
+      <div>
+        <strong>{{ record.source_title }}</strong>
+        <p class="post-meta">{{ record.post.published_at }}</p>
+      </div>
+      <form method="post" action="/posts/{{ record.source_id }}/{{ record.post.message_id }}/bookmark">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="icon-button" type="submit" name="present" value="{% if not record.bookmarked %}on{% endif %}" aria-label="Закладка">
+          {% if record.bookmarked %}В закладках{% else %}Сохранить{% endif %}
+        </button>
+      </form>
+    </header>
+    <div class="post-text">{{ record.post.text }}</div>
+    <footer>
+      <div class="tag-list">
+        {% for tag in record.tags %}
+        <a href="/?tags={{ tag.key }}" class="tag-chip">{{ tag.name }}</a>
+        {% else %}
+        <span class="muted">Без тега</span>
+        {% endfor %}
+      </div>
+      <form class="inline-form" method="post" action="/posts/{{ record.source_id }}/{{ record.post.message_id }}/tag">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <select name="tag_id" aria-label="Тег для публикации">
+          {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.name }}</option>{% endfor %}
+        </select>
+        <button type="submit" name="present" value="on" {% if not tags %}disabled{% endif %}>Добавить тег</button>
+      </form>
+    </footer>
+  </article>
+  {% else %}
+  <p class="empty">Публикации не найдены. Измените фильтры или выполните локальный импорт.</p>
+  {% endfor %}
+</section>
+{% if page.next_cursor %}
+<nav class="pagination" aria-label="Страницы">
+  <a class="button" href="/?{% for key, value in filters.multi_items() if key != 'cursor' %}{{ key }}={{ value | urlencode }}&{% endfor %}cursor={{ page.next_cursor | urlencode }}">Следующая страница</a>
+</nav>
+{% endif %}
+{% endblock %}

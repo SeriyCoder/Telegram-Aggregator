@@ -12,6 +12,8 @@ class Settings:
     database_path: Path
     collection_limit: int
     page_size: int
+    web_host: str
+    web_port: int
 
 
 def load_settings() -> Settings:
@@ -24,6 +26,8 @@ def load_settings() -> Settings:
         database_path=data_dir / "knowledge.sqlite3",
         collection_limit=collection_limit,
         page_size=page_size,
+        web_host="127.0.0.1",
+        web_port=8765,
     )
 
 

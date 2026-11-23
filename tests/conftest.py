@@ -1,9 +1,11 @@
 import asyncio
+import json
 import os
 import selectors
 import socket
 import threading
 from collections.abc import Coroutine, Iterator
+from pathlib import Path
 from typing import Any, NoReturn
 
 import pytest
@@ -81,3 +83,54 @@ def prevent_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     yield
 
     assert not attempts, "The application attempted a network operation"
+
+
+@pytest.fixture
+def web_database(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[Path]:
+    from telegram_knowledge_base.adapters.storage.repository import Repository
+    from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
+    from telegram_knowledge_base.domain.models import Post, Source
+
+    data_dir = tmp_path / "data"
+    monkeypatch.setenv("TKB_DATA_DIR", str(data_dir))
+    database = data_dir / "knowledge.sqlite3"
+    initialize_database(database)
+    repository = Repository(database)
+    fixture = (
+        Path(__file__).resolve().parent
+        / "fixtures"
+        / "knowledge"
+        / "russian_posts.json"
+    )
+    document = json.loads(fixture.read_text(encoding="utf-8"))
+    for item in document["sources"]:
+        source = Source(
+            item["telegram_id"],
+            None,
+            item["title"],
+            item["is_channel"],
+            item["is_public"],
+        )
+        repository.save_import(
+            source,
+            [
+                Post(post["message_id"], post["text"], post["published_at"])
+                for post in item["posts"]
+            ],
+        )
+    yield database
+
+
+@pytest.fixture
+def client(web_database: Path) -> Iterator[Any]:
+    from fastapi.testclient import TestClient
+
+    from telegram_knowledge_base.web.app import create_app
+
+    with TestClient(
+        create_app(),
+        base_url="http://127.0.0.1:8765",
+        backend_options={"loop_factory": OfflineEventLoop},
+        follow_redirects=False,
+    ) as test_client:
+        yield test_client

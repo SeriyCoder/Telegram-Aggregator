@@ -1,7 +1,7 @@
 import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal, cast
 
@@ -450,6 +450,68 @@ class Repository:
             records[offset:end],
             encode_cursor(end) if end < len(records) else None,
         )
+
+    def has_password_verifier(self) -> bool:
+        return self.get_password_verifier() is not None
+
+    def save_password_verifier(self, verifier: str) -> None:
+        now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        with self._connection() as connection, connection:
+            connection.execute(
+                "INSERT INTO web_auth (id, verifier, created_at, updated_at) "
+                "VALUES (1, ?, ?, ?)",
+                (verifier, now, now),
+            )
+
+    def get_password_verifier(self) -> str | None:
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT verifier FROM web_auth WHERE id = 1"
+            ).fetchone()
+        return str(row[0]) if row is not None else None
+
+    def create_session(self, token_hash: str) -> None:
+        now = datetime.now(UTC)
+        expires = now + timedelta(hours=12)
+        with self._connection() as connection, connection:
+            connection.execute(
+                "DELETE FROM web_sessions WHERE expires_at <= ?",
+                (now.strftime("%Y-%m-%dT%H:%M:%SZ"),),
+            )
+            connection.execute(
+                "INSERT INTO web_sessions (token_hash, expires_at, created_at) "
+                "VALUES (?, ?, ?)",
+                (
+                    token_hash,
+                    expires.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                ),
+            )
+
+    def delete_session(self, token_hash: str) -> None:
+        with self._connection() as connection, connection:
+            connection.execute(
+                "DELETE FROM web_sessions WHERE token_hash = ?", (token_hash,)
+            )
+
+    def session_exists(self, token_hash: str) -> bool:
+        now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        with self._connection() as connection, connection:
+            connection.execute("DELETE FROM web_sessions WHERE expires_at <= ?", (now,))
+            row = connection.execute(
+                "SELECT 1 FROM web_sessions WHERE token_hash = ? AND expires_at > ?",
+                (token_hash, now),
+            ).fetchone()
+        return row is not None
+
+    def count_posts_by_source(self) -> dict[str, int]:
+        with self._connection() as connection:
+            rows = connection.execute(
+                "SELECT sources.telegram_id, COUNT(posts.message_id) "
+                "FROM sources LEFT JOIN posts ON posts.source_id = sources.id "
+                "GROUP BY sources.id ORDER BY sources.title, sources.telegram_id"
+            ).fetchall()
+        return {str(row[0]): int(row[1]) for row in rows}
 
     def get_cooldown(self) -> datetime | None:
         with self._connection() as connection:

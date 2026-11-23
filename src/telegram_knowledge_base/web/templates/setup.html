@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Первичная настройка{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Set local password</h1>
+  <p>Пароль защищает эту локальную базу в браузере.</p>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="/setup">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Новый пароль
+      <input type="password" name="password" autocomplete="new-password" minlength="12" required>
+    </label>
+    <label>Повторите пароль
+      <input type="password" name="confirm_password" autocomplete="new-password" minlength="12" required>
+    </label>
+    <button type="submit">Сохранить</button>
+  </form>
+</section>
+{% endblock %}

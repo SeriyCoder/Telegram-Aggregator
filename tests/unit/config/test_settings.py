@@ -25,6 +25,8 @@ def test_defaults_use_local_user_data_and_approved_limits(
     assert settings.database_path.parent == settings.data_dir
     assert settings.collection_limit == 500
     assert settings.page_size == 50
+    assert settings.web_host == "127.0.0.1"
+    assert settings.web_port == 8765
 
 
 @pytest.mark.parametrize(("collection_limit", "page_size"), [(1, 1), (500, 100)])

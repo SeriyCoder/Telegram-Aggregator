@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Источники{% endblock %}
+{% block content %}
+<h1>Источники</h1>
+<section class="card-grid">
+  {% for source in sources %}
+  <article class="panel">
+    <h2>{{ source.title }}</h2>
+    <p>{{ counts.get(source.telegram_id, 0) }} публикаций</p>
+    <p class="muted">{{ source.telegram_id }}</p>
+    <form method="post" action="/sources/{{ source.telegram_id }}/enabled">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" name="enabled" value="{% if not source.enabled %}on{% endif %}">
+        {% if source.enabled %}Отключить{% else %}Включить{% endif %}
+      </button>
+    </form>
+  </article>
+  {% else %}
+  <p class="empty">Источников ещё нет. Импорт выполняется локально до запуска GUI.</p>
+  {% endfor %}
+</section>
+{% endblock %}

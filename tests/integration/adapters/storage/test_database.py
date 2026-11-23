@@ -148,7 +148,7 @@ def test_version_two_database_backfills_search_and_knowledge_schema(
     initialize_database(database)
 
     with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 4
         tables = {
             row[0]
             for row in connection.execute(
@@ -236,3 +236,37 @@ def test_unavailable_fts5_rejects_migration_without_partial_changes(
             )
         }
         assert "tags" not in tables
+
+
+def test_version_three_database_adds_web_auth_without_losing_knowledge(
+    tmp_path: Path,
+) -> None:
+    from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
+
+    database = tmp_path / "knowledge.sqlite3"
+    initialize_database(database)
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "INSERT INTO sources (id, telegram_id, title) VALUES (1, '123', 'Local')"
+        )
+        connection.execute(
+            "INSERT INTO posts (source_id, message_id, text, published_at) "
+            "VALUES (1, 1, 'preserved post', '2026-01-01T00:00:00Z')"
+        )
+        connection.execute("INSERT INTO tags (name, key) VALUES ('Python', 'python')")
+
+    initialize_database(database)
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone() == (4,)
+        tables = {
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        assert {"web_auth", "web_sessions", "tags", "posts"} <= tables
+        assert connection.execute("SELECT text FROM posts").fetchall() == [
+            ("preserved post",)
+        ]
+        assert connection.execute("SELECT key FROM tags").fetchall() == [("python",)]

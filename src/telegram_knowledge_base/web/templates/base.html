@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Telegram Knowledge Base{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+  <header class="site-header">
+    <a class="brand" href="/">Личная база знаний</a>
+    {% if authenticated %}
+    <nav aria-label="Основная навигация">
+      <a href="/">Лента</a>
+      <a href="/tags">Теги</a>
+      <a href="/filters">Фильтры</a>
+      <a href="/sources">Источники</a>
+      <a href="/logout">Выйти</a>
+    </nav>
+    {% endif %}
+  </header>
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
