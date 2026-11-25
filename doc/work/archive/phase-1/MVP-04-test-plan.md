@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | item | MVP-04 |
-| memo | `doc/work/active/MVP-04-memo.md` |
+| memo | `doc/work/archive/phase-1/MVP-04-memo.md` |
 | created | 2026-11-22 |
 | state | green |
 
@@ -105,3 +105,4 @@ auth schema, CSS/JS и launcher не реализованы.
 | 2026-11-23 | Реальный browser smoke `Origin: null` + CSRF | **green**: setup form → feed | Выполнено в отдельной disposable SQLite; база удалена, реальный server 748 posts перезапущен. |
 | 2026-11-23 | `.venv\Scripts\python.exe -m pytest -q`; `.venv\Scripts\python.exe -m mypy src`; `.venv\Scripts\python.exe -m ruff check .`; `.venv\Scripts\python.exe -m ruff format --check .` | pass | 187 passed; static checks green after browser-origin fix. |
 | 2026-11-23 | Browser datetime-local regression | **green**: 17 focused tests, then 189 full tests | `from=2026-11-09T06:45`/`to=2026-11-23T06:45` нормализуются из local timezone в UTC; server не возвращает 500. |
+| 2026-11-23 | `/4-close` full gate | **green**: 189 passed, 1 warning; mypy/Ruff lint/Ruff format pass | Повторный полный gate перед закрытием; warning только deprecation Starlette TestClient |

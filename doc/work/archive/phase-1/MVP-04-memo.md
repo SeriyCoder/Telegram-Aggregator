@@ -8,7 +8,7 @@
 | status | approved |
 | created | 2026-11-22 |
 | approved | 2026-11-22 — пользователь принял все семь рекомендаций |
-| closed | — |
+| closed | 2026-11-23 |
 
 ## Problem
 
@@ -220,32 +220,32 @@ deployment` не являются возможностями launcher.
 | `doc/spec/telegram-knowledge-base.md` | Текущее состояние MVP-04 и критерии локального GUI |
 | `.github/copilot-instructions.md` | Локальный launcher и отсутствие public deployment |
 | `doc/backlog.md` | Закрытие MVP-04; при необходимости отдельный будущий LAN/TLS пункт |
-| `doc/work/active/MVP-04-memo.md`, `doc/work/active/MVP-04-test-plan.md`, `doc/work/STATUS.md` | Артефакты цикла |
+| `doc/work/archive/phase-1/MVP-04-memo.md`, `doc/work/archive/phase-1/MVP-04-test-plan.md`, `doc/work/STATUS.md` | Артефакты цикла |
 
 ## Definition of Done
 
-- [ ] Новые тесты написаны первыми и показали ожидаемое падение
-- [ ] Launcher запускает один локальный server и открывает browser; повторный
+- [x] Новые тесты написаны первыми и показали ожидаемое падение
+- [x] Launcher запускает один локальный server и открывает browser; повторный
   запуск не создаёт второй процесс
-- [ ] Default bind — только `127.0.0.1`; нет публичного/LAN/CDN endpoint
-- [ ] Setup/password/login/logout/cookie tamper/expiry/revocation работают;
+- [x] Default bind — только `127.0.0.1`; нет публичного/LAN/CDN endpoint
+- [x] Setup/password/login/logout/cookie tamper/expiry/revocation работают;
   plaintext password и raw cookie token не сохраняются
-- [ ] Каждая content route отклоняет неаутентифицированного пользователя
-- [ ] POST-операции защищены CSRF и Origin; ошибки не выдают пароль, cookie,
+- [x] Каждая content route отклоняет неаутентифицированного пользователя
+- [x] POST-операции защищены CSRF и Origin; ошибки не выдают пароль, cookie,
   post/rule/search text, path или Telegram secret/session
-- [ ] Лента показывает текст, источник, дату, computed tags/bookmark и корректную
+- [x] Лента показывает текст, источник, дату, computed tags/bookmark и корректную
   cursor pagination
-- [ ] Поиск, источник, даты, теги и bookmarks-комбинации работают из GUI
-- [ ] User may create/edit/delete tags/rules/manual tags, include/exclude filters
+- [x] Поиск, источник, даты, теги и bookmarks-комбинации работают из GUI
+- [x] User may create/edit/delete tags/rules/manual tags, include/exclude filters
   и toggle bookmark/source; каждая операция отражается после redirect
-- [ ] Основные формы работают без JavaScript; мобильный и desktop layout не
+- [x] Основные формы работают без JavaScript; мобильный и desktop layout не
   требуют horizontal scroll, имеют labels/keyboard/focus/skip-link
-- [ ] Telegram adapter/session ни один route не импортирует и не вызывает сеть
-- [ ] README объясняет запуск, первый пароль, stop, local backup/restore
+- [x] Telegram adapter/session ни один route не импортирует и не вызывает сеть
+- [x] README объясняет запуск, первый пароль, stop, local backup/restore
 - [ ] Реальные 748 локально импортированных постов проходят ручной smoke в
   GUI: login, search, tag, bookmark, pagination; текст не попадает в test logs
-- [ ] Suite, type check, lint и format green
-- [ ] Deviations и изменения backlog зафиксированы
+- [x] Suite, type check, lint и format green
+- [x] Deviations и изменения backlog зафиксированы
 
 ## Open Questions — решены 2026-11-22
 
@@ -283,3 +283,4 @@ deployment` не являются возможностями launcher.
 | `/3-implement` | Privacy-тест web проверяет только modules, загруженные запросом, а не весь prior process state | В полном suite Telegram modules были загружены прежними тестами; тест должен доказывать отсутствие нового импорта web-layer, как в MVP-05, а не исходную чистоту общего pytest process |
 | `/3-implement` | `Origin: null` принимается только вместе с совпавшим CSRF cookie/form token | Реальный встроенный браузер VS Code отправляет opaque origin для localhost POST; CSRF остаётся обязательным, `null` не разрешает доступ без локального double-submit token, а обычные внешние Origin продолжают отклоняться |
 | `/3-implement` | `datetime-local` web-форма нормализуется из локального timezone компьютера в UTC на web-границе | Реальный браузер отправляет `2026-11-09T06:45` без суффикса `Z`, тогда как доменный query требует timezone; конверсия устраняет 500 без ослабления domain validation |
+| `/4-close` | Полный authenticated smoke на реальных 748 постах не повторён: пользователь недоступен для самостоятельного входа | Пароль не запрашивался и авторизация не обходилась. Полный offline suite на тех же routes зелёный; критерий оставлен явно открытым для ручной проверки пользователем |

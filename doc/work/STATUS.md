@@ -3,11 +3,11 @@
 | Field | Value |
 | --- | --- |
 | phase | Phase 1 - MVP |
-| current_item | MVP-04 |
-| stage | implement |
-| active_memo | doc/work/active/MVP-04-memo.md |
+| current_item | — |
+| stage | idle |
+| active_memo | — |
 | last_audit | never |
-| updated | 2026-11-22 |
+| updated | 2026-11-23 |
 | contour_size | Full |
 
 ## Closed Items Log
@@ -18,3 +18,4 @@
 | 2026-11-13 | MVP-02 | Импорт публикаций каналов из официального экспорта Telegram | `doc/work/archive/phase-1/MVP-02-memo.md`, `MVP-02-test-plan.md`, `MVP-02-test-plan-v1.md` |
 | 2026-11-22 | MVP-05 | Исходные посты канала из экспорта связанной группы обсуждения | `doc/work/archive/phase-1/MVP-05-memo.md`, `MVP-05-test-plan.md` |
 | 2026-11-22 | MVP-03 | Правила отбора, теги, закладки и полнотекстовый поиск | `doc/work/archive/phase-1/MVP-03-memo.md`, `MVP-03-test-plan.md` |
+| 2026-11-23 | MVP-04 | Защищённый локальный браузерный интерфейс | `doc/work/archive/phase-1/MVP-04-memo.md`, `MVP-04-test-plan.md` |

@@ -39,7 +39,7 @@ MVP-04 запускается только на localhost через `scripts/st
 | `.github/skills/` | A step command must appear in a chat that lists skills |
 | `.github/instructions/` | You need path-scoped rules |
 | `src/telegram_knowledge_base/` | You are changing application layers: domain, use cases, adapters or web |
-| `src/telegram_knowledge_base/web/templates/` (planned) | You are changing server-rendered pages or fragments |
+| `src/telegram_knowledge_base/web/templates/` | You are changing server-rendered pages or fragments |
 | `tests/` | You are adding offline unit or integration tests |
 | `data/` (planned, local runtime data) | You are handling the local database or other persistent user data |
 
@@ -59,8 +59,8 @@ MVP-04 запускается только на localhost через `scripts/st
 2. Collection is read-only; do not send messages, automate channel discovery or bypass Telegram access and rate limits.
 3. Keep Telegram, filtering, storage and web delivery in separate layers; web handlers never receive the Telegram session.
 4. Network-dependent tests are forbidden; replace external services with test adapters.
-5. The MVP is LAN-only. Do not add a tunnel provider or public deployment without a separate approved backlog item.
-6. The current entry point is local-only and does not start an HTTP server. Add authentication before any route that can reveal private content.
+5. The MVP GUI is loopback-only. Do not add LAN binding, a tunnel provider or public deployment without a separate approved backlog item.
+6. The GUI command starts an authenticated loopback-only server on `127.0.0.1:8765`. The default CLI initialization command remains local and does not start HTTP.
 
 ## Environment
 
