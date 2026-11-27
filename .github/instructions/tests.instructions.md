@@ -11,6 +11,13 @@ tests use fakes for Telegram and never require credentials or network access.
 
 - Tests are written in `/2-tests`, before implementation, and must fail first
   for the intended reason.
+- Keep tests minimal and limited to behaviour changed or required by the active
+  item. Test the smallest contract, edge cases and privacy boundary that can
+  prevent a real regression; do not add broad tests for unchanged product
+  surfaces merely to grow coverage.
+- Each new test must name one behavior whose removal or change would be visible
+  in the active item. Existing full-suite checks still run before close to prove
+  that the focused change preserved prior behaviour.
 - Never weaken, skip or delete a test to make it pass. A wrong test is fixed in
   the open, with the reason recorded in the memo's Deviations.
 - No network in any test.

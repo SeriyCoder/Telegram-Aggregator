@@ -3,11 +3,11 @@
 | Field | Value |
 | --- | --- |
 | phase | Phase 1 - MVP |
-| current_item | — |
-| stage | idle |
-| active_memo | — |
+| current_item | FUTURE-04 |
+| stage | tests |
+| active_memo | doc/work/active/FUTURE-04-memo.md |
 | last_audit | never |
-| updated | 2026-11-23 |
+| updated | 2026-11-27 |
 | contour_size | Full |
 
 ## Closed Items Log

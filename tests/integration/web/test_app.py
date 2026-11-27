@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from web_helpers import csrf_token
 
-CONTENT_ROUTES = ["/", "/tags", "/filters", "/sources"]
+CONTENT_ROUTES = ["/", "/tags", "/tags?view=suggestions", "/filters", "/sources"]
 
 
 def test_every_content_route_requires_authentication(client: TestClient) -> None:
@@ -154,6 +154,29 @@ def test_tag_and_rule_forms_update_visible_feed(client: TestClient) -> None:
     feed = client.get("/?tags=python")
     assert "SQLite" in feed.text
     assert "Экономика" not in feed.text
+
+
+def test_authenticated_tag_catalogue_exposes_all_mine_and_suggestions_views(
+    client: TestClient,
+) -> None:
+    setup = client.get("/setup")
+    client.post(
+        "/setup",
+        data={
+            "password": "local-only-password",
+            "confirm_password": "local-only-password",
+            "csrf_token": csrf_token(setup.text),
+        },
+        headers={"Origin": "http://127.0.0.1:8765"},
+        follow_redirects=True,
+    )
+
+    page = client.get("/tags")
+
+    assert page.status_code == 200
+    assert "Все теги" in page.text
+    assert "Мои теги" in page.text
+    assert "Предложения" in page.text
 
 
 def test_logout_revokes_cookie_and_returns_to_login(client: TestClient) -> None:

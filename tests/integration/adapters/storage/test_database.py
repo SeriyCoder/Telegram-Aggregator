@@ -270,3 +270,49 @@ def test_version_three_database_adds_web_auth_without_losing_knowledge(
             ("preserved post",)
         ]
         assert connection.execute("SELECT key FROM tags").fetchall() == [("python",)]
+
+
+def test_version_four_database_migrates_manual_tags_to_context_schema(
+    tmp_path: Path,
+) -> None:
+    from telegram_knowledge_base.adapters.storage.sqlite import initialize_database
+
+    database = tmp_path / "knowledge.sqlite3"
+    initialize_database(database)
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "INSERT INTO sources (id, telegram_id, title) VALUES (1, '123', 'Local')"
+        )
+        connection.execute(
+            "INSERT INTO posts (source_id, message_id, text, published_at) "
+            "VALUES (1, 1, 'preserved post', '2026-01-01T00:00:00Z')"
+        )
+        connection.execute(
+            "INSERT INTO tags (id, name, key) VALUES (1, 'Python', 'python')"
+        )
+        connection.execute(
+            "INSERT INTO manual_post_tags (source_id, message_id, tag_id) "
+            "VALUES (1, 1, 1)"
+        )
+
+    initialize_database(database)
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone() == (5,)
+        tables = {
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        assert {
+            "tag_aliases",
+            "tag_suggestions",
+            "tagging_runs",
+            "tag_assignments",
+            "tag_review_overrides",
+        } <= tables
+        assert "manual_post_tags" not in tables
+        assert connection.execute(
+            "SELECT source_id, message_id, tag_id, origin FROM tag_assignments"
+        ).fetchall() == [(1, 1, 1, "manual")]
